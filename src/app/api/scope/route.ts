@@ -1,12 +1,24 @@
 import { NextResponse } from "next/server";
 import { analyzeBriefWithClaude, isClaudeConfigured, ScopeRefusalError } from "@/lib/scope/claude";
 import { analyzeBrief } from "@/lib/scope/heuristic";
+import { clientKey, createRateLimiter } from "@/lib/rate-limit";
 import { BriefInputSchema, type ScopeResponse } from "@/lib/scope/schema";
 
 export const runtime = "nodejs";
 export const maxDuration = 120;
 
+// Caps how often one client can trigger a paid Claude call.
+const limitRequests = createRateLimiter({ limit: 10, windowMs: 10 * 60 * 1000 });
+
 export async function POST(request: Request) {
+  const limited = limitRequests(clientKey(request));
+  if (!limited.ok) {
+    return NextResponse.json(
+      { error: "Too many analyses in a short time. Try again in a few minutes." },
+      { status: 429, headers: { "Retry-After": String(limited.retryAfterSeconds) } },
+    );
+  }
+
   let body: unknown;
   try {
     body = await request.json();

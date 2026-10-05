@@ -34,4 +34,19 @@ describe("POST /api/scope", () => {
     expect(body.engine).toBe("heuristic");
     expect(body.result.overview.projectType).toBe("Portfolio website");
   });
+
+  it("rate-limits a single client", async () => {
+    const send = () =>
+      POST(
+        new Request("http://localhost/api/scope", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "x-forwarded-for": "203.0.113.9" },
+          body: "{}",
+        }),
+      );
+    for (let i = 0; i < 10; i++) expect((await send()).status).toBe(400);
+    const res = await send();
+    expect(res.status).toBe(429);
+    expect(Number(res.headers.get("Retry-After"))).toBeGreaterThan(0);
+  });
 });

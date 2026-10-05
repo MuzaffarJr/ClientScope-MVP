@@ -29,6 +29,10 @@ Open http://localhost:3000 for the landing page and `/workspace` for the app.
 
 Both engines return the same `ScopeResult` shape.
 
+## Deployment
+
+Deployed on Vercel from `main`. Set `ANTHROPIC_API_KEY` in the Vercel project's environment variables to enable the Claude engine; set `NEXT_PUBLIC_SITE_URL` once a custom domain is attached. `/api/scope` allows 10 requests per client per 10 minutes (in-memory, per instance) to cap paid model calls.
+
 ## Scripts
 
 | Script | What it does |
