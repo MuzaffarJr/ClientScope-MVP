@@ -47,7 +47,12 @@ export function SiteFooter() {
       </div>
       <div className="border-t border-line">
         <div className="container-page flex flex-col gap-2 py-6 text-[13px] text-muted sm:flex-row sm:items-center sm:justify-between">
-          <p>© {new Date().getFullYear()} ClientScope</p>
+          <p>
+            © {new Date().getFullYear()} ClientScope ·{" "}
+            <Link href="/privacy" className="hover:text-heading">
+              Privacy
+            </Link>
+          </p>
           <p className="label-instrument">Estimates are guidance, not guarantees</p>
         </div>
       </div>
