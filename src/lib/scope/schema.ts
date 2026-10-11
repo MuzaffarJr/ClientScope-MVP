@@ -60,10 +60,12 @@ export type ScopeQuestion = ScopeResult["questions"][number];
 
 export type ScopeEngine = "claude" | "heuristic";
 
-export interface ScopeResponse {
-  result: ScopeResult;
-  engine: ScopeEngine;
-}
+export const ScopeResponseSchema = z.object({
+  result: ScopeResultSchema,
+  engine: z.enum(["claude", "heuristic"]),
+});
+
+export type ScopeResponse = z.infer<typeof ScopeResponseSchema>;
 
 export function formatRange(range: { min: number; max: number }): string {
   return range.min === range.max ? `${range.min}` : `${range.min}–${range.max}`;
