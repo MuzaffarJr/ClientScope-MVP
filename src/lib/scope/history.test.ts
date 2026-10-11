@@ -1,6 +1,6 @@
-import { describe, expect, it } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 import { analyzeBrief, SAMPLE_BRIEF } from "./heuristic";
-import { addToHistory, entryStatus, HISTORY_LIMIT, type HistoryEntry } from "./history";
+import { addToHistory, loadHistory, entryStatus, HISTORY_LIMIT, type HistoryEntry } from "./history";
 
 const entry = (id: string): HistoryEntry => ({
   id,
@@ -11,6 +11,26 @@ const entry = (id: string): HistoryEntry => ({
 });
 
 describe("history", () => {
+  afterEach(() => vi.unstubAllGlobals());
+
+  it("keeps valid saved scopes while discarding corrupt records", () => {
+    vi.stubGlobal("window", { localStorage: { getItem: () => JSON.stringify([
+      null, {}, entry("valid"), { ...entry("bad"), result: {} },
+      { ...entry("bad-date"), createdAt: "invalid" },
+    ]) } });
+    expect(loadHistory().map((item) => item.id)).toEqual(["valid"]);
+  });
+
+  it("limits restored history and tolerates invalid JSON or blocked storage", () => {
+    const getItem = vi.fn(() => JSON.stringify(Array.from({ length: 25 }, (_, i) => entry(String(i)))));
+    vi.stubGlobal("window", { localStorage: { getItem } });
+    expect(loadHistory()).toHaveLength(HISTORY_LIMIT);
+    getItem.mockReturnValue("invalid JSON");
+    expect(loadHistory()).toEqual([]);
+    getItem.mockImplementation(() => { throw new Error("Blocked"); });
+    expect(loadHistory()).toEqual([]);
+  });
+
   it("prepends new entries, de-duplicates and caps the list", () => {
     let list: HistoryEntry[] = [];
     for (let i = 0; i < HISTORY_LIMIT + 5; i++) list = addToHistory(list, entry(String(i)));

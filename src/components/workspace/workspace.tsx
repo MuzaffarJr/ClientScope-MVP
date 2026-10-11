@@ -1,9 +1,9 @@
 "use client";
 
-import { useCallback, useRef, useState, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { SAMPLE_BRIEF } from "@/lib/scope/heuristic";
 import { addToHistory, historyStore, type HistoryEntry } from "@/lib/scope/history";
-import { BRIEF_MAX_CHARS, BRIEF_MIN_CHARS, type ScopeResponse } from "@/lib/scope/schema";
+import { BRIEF_MAX_CHARS, BRIEF_MIN_CHARS, ScopeResponseSchema } from "@/lib/scope/schema";
 import { AnalysisSteps, ANALYSIS_STEPS } from "../scope/analysis-steps";
 import { ScopeResultView } from "../scope/scope-result-view";
 import { Button } from "../ui/button";
@@ -30,6 +30,8 @@ export function Workspace() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const abortRef = useRef<AbortController | null>(null);
 
+  useEffect(() => () => abortRef.current?.abort(), []);
+
   const trimmed = brief.trim();
   const tooShort = trimmed.length < BRIEF_MIN_CHARS;
   const tooLong = brief.length > BRIEF_MAX_CHARS;
@@ -49,7 +51,7 @@ export function Workspace() {
 
     // Steps advance on a clock but hold on the last one until the response lands.
     const ticker = window.setInterval(() => {
-      setStep((s) => Math.min(s + 1, ANALYSIS_STEPS.length - 1));
+      if (!controller.signal.aborted) setStep((s) => Math.min(s + 1, ANALYSIS_STEPS.length - 1));
     }, STEP_MS);
     const minDuration = new Promise((r) => window.setTimeout(r, STEP_MS * ANALYSIS_STEPS.length));
 
@@ -64,6 +66,7 @@ export function Workspace() {
         minDuration,
       ]);
       const data: unknown = await res.json().catch(() => null);
+      if (controller.signal.aborted) return;
       if (!res.ok) {
         const message =
           data && typeof data === "object" && "error" in data && typeof data.error === "string"
@@ -71,7 +74,9 @@ export function Workspace() {
             : "The analysis could not be completed.";
         throw new Error(message);
       }
-      const payload = data as ScopeResponse;
+      const parsed = ScopeResponseSchema.safeParse(data);
+      if (!parsed.success) throw new Error("The analysis returned an invalid result. Please try again.");
+      const payload = parsed.data;
       const entry: HistoryEntry = {
         id: crypto.randomUUID(),
         createdAt: new Date().toISOString(),

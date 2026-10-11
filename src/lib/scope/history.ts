@@ -1,4 +1,5 @@
-import type { ScopeEngine, ScopeResult } from "./schema";
+import { z } from "zod";
+import { ScopeResponseSchema, type ScopeEngine, type ScopeResult } from "./schema";
 
 export interface HistoryEntry {
   id: string;
@@ -7,6 +8,12 @@ export interface HistoryEntry {
   engine: ScopeEngine;
   result: ScopeResult;
 }
+
+const HistoryEntrySchema = ScopeResponseSchema.extend({
+  id: z.string().min(1),
+  createdAt: z.iso.datetime(),
+  brief: z.string(),
+});
 
 const KEY = "clientscope.history.v1";
 export const HISTORY_LIMIT = 20;
@@ -17,7 +24,11 @@ export function loadHistory(): HistoryEntry[] {
     const raw = window.localStorage.getItem(KEY);
     if (!raw) return [];
     const parsed: unknown = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as HistoryEntry[]) : [];
+    if (!Array.isArray(parsed)) return [];
+    return parsed.flatMap((item) => {
+      const validated = HistoryEntrySchema.safeParse(item);
+      return validated.success ? [validated.data] : [];
+    }).slice(0, HISTORY_LIMIT);
   } catch {
     return [];
   }
