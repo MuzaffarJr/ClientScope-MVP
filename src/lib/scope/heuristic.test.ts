@@ -44,6 +44,18 @@ describe("analyzeBrief", () => {
     expect(features).toContain("Messaging and notifications");
   });
 
+  it("does not treat words that merely start with chat as messaging", () => {
+    const features = analyzeBrief("A website for our Chatham chateau hotel with rooms, gallery and a contact page.")
+      .features.map((f) => f.name);
+    expect(features).not.toContain("Messaging and notifications");
+  });
+
+  it("skips the payment provider question when Uzcard or Humo is named", () => {
+    const result = analyzeBrief("An online store for our bakery where customers pay with Uzcard or Humo at checkout.");
+    expect(result.features.map((f) => f.name)).toContain("Payments");
+    expect(result.questions.map((q) => q.question).join(" ")).not.toMatch(/payment provider/i);
+  });
+
   it("asks fewer questions when the brief already answers them", () => {
     const vague = analyzeBrief("We need a website for our bakery with a menu page and a contact form please.");
     const detailed = analyzeBrief(

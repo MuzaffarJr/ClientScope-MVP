@@ -174,7 +174,7 @@ const FEATURE_RULES: FeatureRule[] = [
     hours: 3,
   },
   {
-    match: /\b(chat|messag|notifications?|reminders?|sms|telegram|real-?time)/i,
+    match: /\b(chat|messages?|messaging|notifications?|reminders?|sms|telegram|real-?time)\b/i,
     name: "Messaging and notifications",
     detail: "In-app or email notifications triggered by user activity.",
     hours: 12,
@@ -244,7 +244,7 @@ const QUESTION_RULES: QuestionRule[] = [
     },
   },
   {
-    answeredBy: /\b(stripe|paypal|payme|click|square)\b/i,
+    answeredBy: /\b(stripe|paypal|payme|click|uzcard|humo|square)\b/i,
     when: (ctx) => ctx.features.some((f) => f.name === "Payments"),
     question: {
       question: "Which payment provider and currencies must be supported?",
