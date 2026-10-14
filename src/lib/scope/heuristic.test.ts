@@ -30,6 +30,32 @@ describe("analyzeBrief", () => {
     expect(result.boundaries.thirdPartyCost.join(" ")).toMatch(/Shopify plan/);
   });
 
+  it("detects deposits, local payment providers and SMS reminders", () => {
+    const result = analyzeBrief(
+      "Booking website for our dental clinic. Patients book appointments, get SMS reminders and pay deposits with Payme.",
+    );
+    const features = result.features.map((f) => f.name);
+    expect(features).toEqual(expect.arrayContaining(["Booking", "Payments", "Messaging and notifications"]));
+  });
+
+  it("matches messaging wording beyond the bare stem", () => {
+    const features = analyzeBrief("A website where customers can send messages to our team and get answers fast.")
+      .features.map((f) => f.name);
+    expect(features).toContain("Messaging and notifications");
+  });
+
+  it("does not treat words that merely start with chat as messaging", () => {
+    const features = analyzeBrief("A website for our Chatham chateau hotel with rooms, gallery and a contact page.")
+      .features.map((f) => f.name);
+    expect(features).not.toContain("Messaging and notifications");
+  });
+
+  it("skips the payment provider question when Uzcard or Humo is named", () => {
+    const result = analyzeBrief("An online store for our bakery where customers pay with Uzcard or Humo at checkout.");
+    expect(result.features.map((f) => f.name)).toContain("Payments");
+    expect(result.questions.map((q) => q.question).join(" ")).not.toMatch(/payment provider/i);
+  });
+
   it("asks fewer questions when the brief already answers them", () => {
     const vague = analyzeBrief("We need a website for our bakery with a menu page and a contact form please.");
     const detailed = analyzeBrief(

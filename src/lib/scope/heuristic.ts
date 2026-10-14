@@ -104,7 +104,7 @@ const FEATURE_RULES: FeatureRule[] = [
     hours: 14,
   },
   {
-    match: /\b(payments?|stripe|paypal|checkout|subscriptions?|billing)\b/i,
+    match: /\b(pay|payments?|deposits?|stripe|paypal|payme|uzcard|humo|checkout|subscriptions?|billing)\b/i,
     name: "Payments",
     detail: "Payment provider integration with success, failure and refund paths.",
     hours: 16,
@@ -174,7 +174,7 @@ const FEATURE_RULES: FeatureRule[] = [
     hours: 3,
   },
   {
-    match: /\b(chat|messag|notifications?|real-?time)\b/i,
+    match: /\b(chat|messages?|messaging|notifications?|reminders?|sms|telegram|real-?time)\b/i,
     name: "Messaging and notifications",
     detail: "In-app or email notifications triggered by user activity.",
     hours: 12,
@@ -244,7 +244,7 @@ const QUESTION_RULES: QuestionRule[] = [
     },
   },
   {
-    answeredBy: /\b(stripe|paypal|payme|click|square)\b/i,
+    answeredBy: /\b(stripe|paypal|payme|click|uzcard|humo|square)\b/i,
     when: (ctx) => ctx.features.some((f) => f.name === "Payments"),
     question: {
       question: "Which payment provider and currencies must be supported?",
